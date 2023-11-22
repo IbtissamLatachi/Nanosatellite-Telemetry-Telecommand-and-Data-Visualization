@@ -3,7 +3,6 @@ import { useState } from "react";
 import axios from "axios";
 
 // @mui material components
-import Divider from "@mui/material/Divider";
 import Typography from "@mui/material/Typography";
 import Button from "@mui/material/Button";
 import List from "@mui/material/List";
@@ -14,6 +13,12 @@ import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import SendIcon from "@mui/icons-material/Send";
 
 // Material Dashboard 2 React components
 import MDBox from "components/MDBox";
@@ -25,9 +30,14 @@ import Footer from "examples/Footer";
 
 function EPS() {
   const [selectedCommand, setSelectedCommand] = useState(null);
-  const [selectedTelemetryRequest, setSelectedTelemetryRequest] =
-    useState(null);
+  const [commandsToSend, setCommandsToSend] = useState([]);
   const [actionLog, setActionLog] = useState([]);
+  const [checkedCategories, setCheckedCategories] = useState({
+    EPS: true,
+    COM: true,
+    ADCS: true,
+    CAM: true,
+  });
 
   // Commands and Telemetry Requests
   const telecommands = [
@@ -42,25 +52,15 @@ function EPS() {
     { name: "Reset Watchdog Ground", command: "eps_cmd_reset_wdt_gnd_cb" },
     { name: "Set PPT Mode", command: "eps_cmd_set_pptmode_cb" },
     { name: "Set VBoost", command: "eps_cmd_set_vboost_cb" },
-  ];
-
-  const telemetryRequests = [
     { name: "Get Housekeeping", command: "eps_telem_hk_get_cb" },
     { name: "Get Persistent HK", command: "eps_telem_hk_persist_get_cb" },
   ];
 
   // Preset Telecommands
   const presetCommands = [
-    { name: "Get Config 1", command: "eps_cmd_get_config1_cb" },
-    { name: "Get Config 2", command: "eps_cmd_get_config2_cb" },
-    { name: "Get Config 3", command: "eps_cmd_get_config3_cb" },
-    { name: "Reset Watchdog Ground", command: "eps_cmd_reset_wdt_gnd_cb" },
-  ];
-
-  // Preset Telemetry Requests
-  const presetTelemetryRequests = [
     { name: "Get Housekeeping", command: "eps_telem_hk_get_cb" },
     { name: "Get Persistent HK", command: "eps_telem_hk_persist_get_cb" },
+    { name: "Reset Watchdog Ground", command: "eps_cmd_reset_wdt_gnd_cb" },
   ];
 
   const handleSendCommand = async (command) => {
@@ -79,21 +79,28 @@ function EPS() {
     }
   };
 
-  const handleSendTelemetryRequest = async (command) => {
-    try {
-      const response = await axios.post(
-        "http://" + window.location.hostname + ":8000/eps",
-        {
-          command,
-        }
-      );
-      logAction(
-        `${command} sent successfully. Response: ${JSON.stringify(
-          response.data
-        )}`
-      );
-    } catch (error) {
-      logAction(`Error sending ${command}: ${error}`);
+  // Add or remove commands/telemetry from the list to send
+  const modifyList = (item, listType, action) => {
+    setActionLog((prevLog) => [
+      ...prevLog,
+      `${new Date().toLocaleTimeString()} ${
+        action === "add" ? "Added" : "Removed"
+      } ${item} to ${listType}`,
+    ]);
+    setCommandsToSend((prevList) =>
+      action === "add"
+        ? [...prevList, item]
+        : prevList.filter((cmd) => cmd !== item)
+    );
+  };
+
+  // Send all commands/telemetry requests
+  const handleSendAll = async (listType) => {
+    if (listType === "commands") {
+      for (const command of commandsToSend) {
+        await handleSendCommand(command);
+      }
+      setCommandsToSend([]);
     }
   };
 
@@ -101,6 +108,13 @@ function EPS() {
   const logAction = (action) => {
     const timestamp = new Date().toLocaleTimeString();
     setActionLog((prevLog) => [...prevLog, `${timestamp} ${action}`]);
+  };
+
+  const toggleCategory = (category) => {
+    setCheckedCategories((prevCategories) => ({
+      ...prevCategories,
+      [category]: !prevCategories[category],
+    }));
   };
 
   return (
@@ -112,7 +126,9 @@ function EPS() {
             <Card>
               <MDBox p={3}>
                 {/* Telecommand List with Scrollable View */}
-                <Typography variant="h6">Telecommands</Typography>
+                <Typography variant="h6">
+                  Telecommands & Telemetry Requests
+                </Typography>
                 <Box
                   display="flex"
                   justifyContent="space-between"
@@ -144,6 +160,9 @@ function EPS() {
                       ))}
                     </List>
                   </Box>
+                  <List component={Paper}>
+                    {/* HERE SHOULD BE THE SCHEDULED COMMANDS BEFORE THEY ARE SENT YOU SHOULD BE ABLE TO ADD AND REMOVE THEM.*/}
+                  </List>
                   <Box
                     display="flex"
                     flexDirection="column"
@@ -152,17 +171,18 @@ function EPS() {
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={() => handleSendCommand(selectedCommand)}
-                      disabled={!selectedCommand}
+                      endIcon={<SendIcon />}
+                      onClick={() => handleSendAll("commands")}
+                      disabled={commandsToSend.length === 0}
                       sx={{
                         mb: 1,
                         width: "200px",
                         color: "common.black",
-                        backgroundColor: "grey.300",
+                        backgroundColor: "green.300",
                         "&:hover": { backgroundColor: "primary.main" },
                       }}
                     >
-                      Send Telecommand
+                      Send Command(s)
                     </Button>
                     {presetCommands.map((presetCommand, index) => (
                       <Button
@@ -183,95 +203,49 @@ function EPS() {
                     ))}
                   </Box>
                 </Box>
-
-                {/* Divider between categories */}
-                <MDBox mt={4} mb={2}>
-                  <Divider />
-                </MDBox>
-
-                {/* Telemetry Request List with Scrollable View */}
-                <Typography variant="h6">Telemetry Requests</Typography>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="flex-start"
-                  mt={2}
+                {/* Add the new + and - buttons */}
+                <IconButton
+                  color="primary"
+                  onClick={() => modifyList(selectedCommand, "commands", "add")}
+                  disabled={!selectedCommand}
                 >
-                  <Box
-                    sx={{
-                      width: "70%",
-                      maxHeight: 200,
-                      overflow: "auto",
-                      mr: 2,
-                      border: "1px solid lightgrey",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <List component={Paper}>
-                      {telemetryRequests.map((command, index) => (
-                        <ListItem key={index} disablePadding>
-                          <ListItemButton
-                            selected={
-                              selectedTelemetryRequest === command.command
-                            }
-                            onClick={() =>
-                              setSelectedTelemetryRequest(command.command)
-                            }
-                          >
-                            <ListItemText primary={command.name} />
-                          </ListItemButton>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="flex-start"
-                  >
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() =>
-                        handleSendTelemetryRequest(selectedTelemetryRequest)
-                      }
-                      disabled={!selectedTelemetryRequest}
-                      sx={{
-                        mb: 1,
-                        width: "200px",
-                        color: "common.black",
-                        backgroundColor: "grey.300",
-                        "&:hover": { backgroundColor: "primary.main" },
-                      }}
-                    >
-                      Send Request
-                    </Button>
-                    {presetTelemetryRequests.map((presetRequest, index) => (
-                      <Button
-                        key={index}
-                        variant="contained"
-                        color="secondary"
-                        onClick={() =>
-                          handleSendTelemetryRequest(presetRequest.command)
-                        }
-                        sx={{
-                          mb: 1,
-                          width: "200px",
-                          color: "common.black",
-                          backgroundColor: "green.300",
-                          "&:hover": { backgroundColor: "primary.main" },
-                        }}
-                      >
-                        {presetRequest.name}
-                      </Button>
-                    ))}
-                  </Box>
-                </Box>
+                  <AddCircleOutlineIcon />
+                </IconButton>
+                <IconButton
+                  color="secondary"
+                  onClick={() =>
+                    modifyList(selectedCommand, "commands", "remove")
+                  }
+                  disabled={
+                    !selectedCommand ||
+                    !commandsToSend.includes(selectedCommand)
+                  }
+                >
+                  <RemoveCircleOutlineIcon />
+                </IconButton>
               </MDBox>
             </Card>
           </Grid>
 
           <Grid item xs={12} md={4}>
+            {/* Filter checkboxes */}
+            <Box
+              sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}
+            >
+              {Object.keys(checkedCategories).map((category) => (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={checkedCategories[category]}
+                      onChange={() => toggleCategory(category)}
+                    />
+                  }
+                  label={category}
+                  key={category}
+                />
+              ))}
+            </Box>
+
             {/* Action Log Window */}
             <Card>
               <MDBox p={2} sx={{ height: "600px", overflow: "auto" }}>

@@ -4,6 +4,9 @@ import json
 import logging
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
+import pymongo
+import ssl
+import certifi
 
 # Configure logging
 logger = logging.getLogger(__name__)
@@ -15,6 +18,15 @@ def eps_view(request):
         return JsonResponse({"error": "Unsupported request method."}, status=405)
 
     try:
+        client = pymongo.MongoClient(
+            "mongodb+srv://merradi:sonxoq-xubfi5-tyxPas@cluster0.uwxph0t.mongodb.net/?retryWrites=true&w=majority",
+            tlsCAFile=certifi.where(),
+        )
+        db = client.myDatabase
+        collection = db.eps_collection
+
+        # logger.info("Testing logger in eps_view")
+
         # Parse the request data
         request_data = json.loads(request.body)
         text_to_send = request_data.get("command", "default command")
@@ -41,8 +53,23 @@ def eps_view(request):
             acknowledgment = client_socket.recv(1024)
             logger.info(f"Server Acknowledgment: {acknowledgment.decode('utf-8')}")
 
+            # Convert the acknowledgment to a Python dictionary
+            try:
+                acknowledgment_data = json.loads(acknowledgment.decode("utf-8"))
+            except json.JSONDecodeError:
+                return JsonResponse(
+                    {"error": "Invalid acknowledgment format."}, status=500
+                )
+
+            # Insert the acknowledgment data into MongoDB
+            result = collection.insert_one(acknowledgment_data)
+
             # Return the server's acknowledgment to the frontend
-            return JsonResponse({"message": acknowledgment.decode("utf-8")})
+            if result:
+                return JsonResponse({"message": "Data inserted successfully"})
+            else:
+                return JsonResponse({"message": "Error during insertion"})
+
     except json.JSONDecodeError as e:
         logger.error(f"Error parsing request data: {str(e)}")
         return JsonResponse({"error": "Invalid JSON data."}, status=400)

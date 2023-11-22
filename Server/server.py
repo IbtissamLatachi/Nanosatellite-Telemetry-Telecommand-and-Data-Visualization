@@ -50,51 +50,46 @@ def simulate_error():
 
 # EPS Command: Get Configuration 1
 def eps_cmd_get_config1_cb():
-    # This could represent the voltage of boost converters
     vboost = [random.randint(3000, 4000) for _ in range(3)]
-    return f"Config 1: [VBoost: {vboost}]"
+    return {"config_1": {"VBoost": vboost}}
 
 
 # EPS Command: Set Configuration 1
 def eps_cmd_set_config1_cb():
-    # Simulate setting vboost values
     vboost = [random.randint(3000, 4000) for _ in range(3)]
-    return f"Config 1 Set: [VBoost: {vboost}]"
+    return {"config_1_set": {"VBoost": vboost}}
 
 
 # EPS Command: Get Configuration 2
 def eps_cmd_get_config2_cb():
-    # This could represent battery configurations
     vbatt_max = random.randint(8000, 9000)
     vbatt_safe = random.randint(6000, 7000)
-    return f"Config 2: [VBatt Max: {vbatt_max}, VBatt Safe: {vbatt_safe}]"
+    return {"config_2": {"VBatt Max": vbatt_max, "VBatt Safe": vbatt_safe}}
 
 
 # EPS Command: Set Configuration 2
 def eps_cmd_set_config2_cb():
     vbatt_max = random.randint(8000, 9000)
     vbatt_safe = random.randint(6000, 7000)
-    return f"Config 2 Set: [VBatt Max: {vbatt_max}, VBatt Safe: {vbatt_safe}]"
+    return {"config_2_set": {"VBatt Max": vbatt_max, "VBatt Safe": vbatt_safe}}
 
 
 # EPS Command: Get Configuration 3
 def eps_cmd_get_config3_cb():
-    # This could represent the status of outputs
     output_status = [random.choice(["ON", "OFF"]) for _ in range(3)]
-    return f"Config 3: [Output Status: {output_status}]"
+    return {"config_3": {"Output Status": output_status}}
 
 
 # EPS Command: Set Configuration 3
 def eps_cmd_set_config3_cb():
     output_status = [random.choice(["ON", "OFF"]) for _ in range(3)]
-    return f"Config 3 Set: [Output Status: {output_status}]"
+    return {"config_3_set": {"Output Status": output_status}}
 
 
 # EPS Command: Set Timeout
 def eps_cmd_set_timeout_cb():
-    # Simulate setting a watchdog timer timeout
     timeout = random.randint(100, 600)  # Random timeout in seconds
-    return f"Timeout Set: [WDT: {timeout}s]"
+    return {"timeout_set": {"WDT": f"{timeout}s"}}
 
 
 # EPS Command: Set Heater Control
@@ -102,24 +97,30 @@ def eps_cmd_set_heater_ctrl_cb():
     mode = random.choice(["AUTO", "MANUAL"])
     temp_high = random.randint(15, 25)  # High temperature threshold
     temp_low = random.randint(0, 10)  # Low temperature threshold
-    return f"Heater Control Set: [Mode: {mode}, Temp High: {temp_high}C, Temp Low: {temp_low}C]"
+    return {
+        "heater_control_set": {
+            "Mode": mode,
+            "Temp High": f"{temp_high}C",
+            "Temp Low": f"{temp_low}C",
+        }
+    }
 
 
 # EPS Command: Reset Watchdog Timer Ground
 def eps_cmd_reset_wdt_gnd_cb():
-    return "WDT Ground Reset: Success"
+    return {"wdt_ground_reset": {"Status": "Success"}}
 
 
 # EPS Command: Set PPT Mode
 def eps_cmd_set_pptmode_cb():
     mode = random.choice(["MPPT", "FIXED"])
-    return f"PPT Mode Set: [Mode: {mode}]"
+    return {"ppt_mode_set": {"Mode": mode}}
 
 
 # EPS Command: Set VBoost
 def eps_cmd_set_vboost_cb():
     vboost = [random.randint(3000, 4000) for _ in range(3)]
-    return f"VBoost Set: [{', '.join(map(str, vboost))}]"
+    return {"vboost_set": {"VBoost": vboost}}
 
 
 # EPS Telemetry Data Request
