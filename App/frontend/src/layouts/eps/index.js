@@ -1,6 +1,7 @@
 // React core
 import { useState } from "react";
 import axios from "axios";
+import { useEffect } from "react";
 
 // @mui material components
 import Typography from "@mui/material/Typography";
@@ -27,6 +28,16 @@ import MDBox from "components/MDBox";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import Footer from "examples/Footer";
+
+// Recharts
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 
 function EPS() {
   const [selectedCommand, setSelectedCommand] = useState(null);
@@ -66,7 +77,7 @@ function EPS() {
   const handleSendCommand = async (command) => {
     try {
       const response = await axios.post(
-        "http://" + window.location.hostname + ":8000/eps",
+        "http://" + window.location.hostname + ":8000/eps/command",
         { command }
       );
       logAction(
@@ -116,6 +127,14 @@ function EPS() {
       [category]: !prevCategories[category],
     }));
   };
+
+  const [voltageData, setVoltageData] = useState([]);
+
+  useEffect(() => {
+    fetch("http://" + window.location.hostname + ":8000/eps/aespa")
+      .then((response) => response.json())
+      .then((data) => setVoltageData(data.voltage_data));
+  }, []);
 
   return (
     <DashboardLayout>
@@ -225,6 +244,21 @@ function EPS() {
                 </IconButton>
               </MDBox>
             </Card>
+            <MDBox mt={4}>
+              {/* Voltage Over Time Visualization */}
+              <Card>
+                <MDBox p={3}>
+                  <Typography variant="h6">Voltage Over Time</Typography>
+                  <LineChart width={600} height={300} data={voltageData}>
+                    <Line type="monotone" dataKey="vbatt" stroke="#8884d8" />
+                    <CartesianGrid stroke="#ccc" />
+                    <XAxis dataKey="timestamp" />
+                    <YAxis />
+                    <Tooltip />
+                  </LineChart>
+                </MDBox>
+              </Card>
+            </MDBox>
           </Grid>
 
           <Grid item xs={12} md={4}>
@@ -248,7 +282,7 @@ function EPS() {
 
             {/* Action Log Window */}
             <Card>
-              <MDBox p={2} sx={{ height: "600px", overflow: "auto" }}>
+              <MDBox p={2} sx={{ height: "700px", overflow: "auto" }}>
                 {actionLog.map((log, index) => (
                   <MDBox
                     key={index}

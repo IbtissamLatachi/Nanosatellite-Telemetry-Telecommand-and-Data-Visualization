@@ -5,7 +5,6 @@ import logging
 from django.conf import settings
 from django.views.decorators.csrf import csrf_exempt
 import pymongo
-import ssl
 import certifi
 
 # Configure logging
@@ -79,3 +78,32 @@ def eps_view(request):
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         return JsonResponse({"error": "An unexpected error occurred."}, status=500)
+
+
+@csrf_exempt
+def fetch_visualization_data(request):
+    if request.method != "GET":
+        return JsonResponse({"error": "Unsupported request method."}, status=405)
+
+    client = pymongo.MongoClient(
+        "mongodb+srv://merradi:sonxoq-xubfi5-tyxPas@cluster0.uwxph0t.mongodb.net/?retryWrites=true&w=majority",
+        tlsCAFile=certifi.where(),
+    )
+    db = client.myDatabase
+    collection = db.eps_collection
+
+    # Fetch data from MongoDB
+    documents = collection.find()
+
+    # Prepare datasets for visualization
+    # Example: Summarize data into categories, counts, or averages as needed
+
+    # As the need for more data visualization arises, add more datasets to this list
+
+    voltage_data = []
+    for doc in documents:
+        if "vbatt" in doc and "timestamp" in doc:  # Ensure necessary fields are present
+            voltage_data.append({"timestamp": doc["timestamp"], "vbatt": doc["vbatt"]})
+
+    # Return the dataset
+    return JsonResponse({"voltage_data": voltage_data})
