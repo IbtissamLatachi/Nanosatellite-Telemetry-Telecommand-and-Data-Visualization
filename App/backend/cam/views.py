@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @csrf_exempt
-def eps_view(request):
+def cam_view(request):
     if request.method != "POST":
         return JsonResponse({"error": "Unsupported request method."}, status=405)
 
@@ -22,9 +22,9 @@ def eps_view(request):
             tlsCAFile=certifi.where(),
         )
         db = client.myDatabase
-        collection = db.eps_collection
+        collection = db.cam_collection
 
-        # logger.info("Testing logger in eps_view")
+        # logger.info("Testing logger in cam_view")
 
         # Parse the request data
         request_data = json.loads(request.body)
@@ -42,22 +42,21 @@ def eps_view(request):
         # Using a context manager for socket operations
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             client_socket.connect(server_address)
-            logger.info("Connected to the server.")
 
-            # Send a tuple with [10, 4, {text_to_send}]
-            formatted_data = f"{10},{4},{text_to_send}"
+            formatted_data = f"{10},{2},{text_to_send}"
             client_socket.send(formatted_data.encode("utf-8"))
 
             # Wait for and receive acknowledgment from the server
             acknowledgment = client_socket.recv(1024)
-            # logger.info(f"Server Acknowledgment: {acknowledgment.decode('utf-8')}")
 
-            # Convert the acknowledgment to a Python dictionary
+            # Ensure acknowledgment data is in JSON format
             try:
                 acknowledgment_data = json.loads(acknowledgment.decode("utf-8"))
-            except json.JSONDecodeError:
+                if not isinstance(acknowledgment_data, dict):
+                    raise ValueError("Acknowledgment data is not a dictionary")
+            except (json.JSONDecodeError, ValueError) as e:
                 return JsonResponse(
-                    {"error": "Invalid acknowledgment format."}, status=500
+                    {"error": f"Invalid acknowledgment format: {str(e)}"}, status=500
                 )
 
             # Insert the acknowledgment data into MongoDB
@@ -81,7 +80,7 @@ def eps_view(request):
 
 
 @csrf_exempt
-def fetch_visualization_data(request):
+def fetch_images(request):
     if request.method != "GET":
         return JsonResponse({"error": "Unsupported request method."}, status=405)
 
@@ -90,20 +89,19 @@ def fetch_visualization_data(request):
         tlsCAFile=certifi.where(),
     )
     db = client.myDatabase
-    collection = db.eps_collection
+    collection = db.cam_collection
 
     # Fetch data from MongoDB
-    documents = collection.find()
+    documents = collection.find({"image_snapped": {"$exists": True}})
 
-    # Prepare datasets for visualization
-    # Example: Summarize data into categories, counts, or averages as needed
-
-    # As the need for more data visualization arises, add more datasets to this list
-
-    voltage_data = []
-    for doc in documents:
-        if "vbatt" in doc and "timestamp" in doc:  # Ensure necessary fields are present
-            voltage_data.append({"timestamp": doc["timestamp"], "vbatt": doc["vbatt"]})
+    # Prepare the dataset of image URLs and timestamps
+    image_data = [
+        {
+            "image_url": doc["image_snapped"]["image_url"],
+            "timestamp": doc["image_snapped"]["timestamp"],
+        }
+        for doc in documents
+    ]
 
     # Return the dataset
-    return JsonResponse({"voltage_data": voltage_data})
+    return JsonResponse({"images": image_data})

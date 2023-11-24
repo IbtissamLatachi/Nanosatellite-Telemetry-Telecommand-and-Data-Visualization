@@ -250,7 +250,7 @@ def com_telem_hk_cmd_get_cb():
 def cam_cmd_snap_cb():
     image_url = get_mars_rover_image()
     timestamp = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-    return f"Image Snapped: [Image URL: {image_url}, Timestamp: {timestamp}]"
+    return {"image_snapped": {"image_url": image_url, "timestamp": timestamp}}
 
 
 # CAM Command: Store image
@@ -258,33 +258,44 @@ def cam_cmd_store_cb():
     image_id = random.randint(100, 200)
     storage_status = "Secured"
     size = random.uniform(1.0, 5.0)  # Image size in MB
-    return f"Image Stored: [Image ID: {image_id}, Storage Status: {storage_status}, Size: {size:.1f}MB]"
+    return {
+        "image_stored": {
+            "image_id": image_id,
+            "storage_status": storage_status,
+            "size_MB": size,
+        }
+    }
 
 
 # CAM Command: List stored images
 def cam_cmd_img_list_cb():
     stored_images = random.sample(range(100, 200), 5)  # Randomly pick 5 image IDs
-    return f"Stored Images: [Total: 5, Image IDs: {stored_images}]"
+    return {"stored_images": {"total": 5, "image_ids": stored_images}}
 
 
 # CAM Command: Flush image storage
 def cam_cmd_img_flush_cb():
     freed_space = random.uniform(10.0, 30.0)  # Freed space in MB
-    return f"Image Storage Flushed: [Status: Success, Freed Space: {freed_space:.1f}MB]"
+    return {
+        "image_storage_flushed": {"status": "Success", "freed_space_MB": freed_space}
+    }
 
 
 # CAM Command: Adjust focus
 def cam_cmd_focus_cb():
     new_focus_level = random.uniform(5.0, 10.0)
-    return f"Focus Adjusted: [New Focus Level: {new_focus_level:.1f}, Status: Sharp]"
+    return {"focus_adjusted": {"new_focus_level": new_focus_level, "status": "Sharp"}}
 
 
 # CAM Command: Recover file system
 def cam_cmd_recover_fs_cb():
     recovered_files = random.randint(1, 5)
-    return (
-        f"File System Recovery: [Status: Completed, Recovered Files: {recovered_files}]"
-    )
+    return {
+        "file_system_recovery": {
+            "status": "Completed",
+            "recovered_files": recovered_files,
+        }
+    }
 
 
 # CAM Telemetry: Housekeeping Data
@@ -292,12 +303,14 @@ def cam_telem_hk_get_cb():
     error_occurred = simulate_error()
     stored_images = random.sample(range(100, 200), 5)
     return {
-        "timestamp": random_datetime(),
-        "stored_images": stored_images,
-        "total_storage_used": random.uniform(10.0, 30.0),  # Total storage used in MB
-        "camera_status": random.choice(["Operational", "Standby", "Error"]),
-        "error": error_occurred,
-        "error_code": "E05" if error_occurred else "None",
+        "housekeeping_data": {
+            "timestamp": random_datetime(),
+            "stored_images": stored_images,
+            "total_storage_used_MB": random.uniform(10.0, 30.0),
+            "camera_status": random.choice(["Operational", "Standby", "Error"]),
+            "error": error_occurred,
+            "error_code": "E05" if error_occurred else "None",
+        }
     }
 
 
@@ -306,13 +319,13 @@ def cam_telem_hk_cmd_get_cb():
     error_occurred = simulate_error()
     stored_images = random.sample(range(100, 200), 5)
     return {
-        "timestamp": random_datetime(),
-        "recently_captured": stored_images,
-        "capture_success_rate": random.uniform(
-            0, 1
-        ),  # Simulated image capture success rate
-        "error": error_occurred,
-        "error_code": "E06" if error_occurred else "None",
+        "command_data": {
+            "timestamp": random_datetime(),
+            "recently_captured": stored_images,
+            "capture_success_rate": random.uniform(0, 1),
+            "error": error_occurred,
+            "error_code": "E06" if error_occurred else "None",
+        }
     }
 
 
