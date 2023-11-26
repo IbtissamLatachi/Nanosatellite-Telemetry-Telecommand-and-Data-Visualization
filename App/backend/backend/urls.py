@@ -21,5 +21,7 @@ urlpatterns = [
     path("obc", include("obc.urls")),
     path("eps", include("eps.urls")),
     path("cam", include("cam.urls")),
+    path("com", include("com.urls")),
+    path("adcs", include("adcs.urls")),
     path("admin/", admin.site.urls),
 ]

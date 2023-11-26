@@ -1,6 +1,7 @@
 // React core
 import { useState } from "react";
 import axios from "axios"; // for API requests
+import { useEffect } from "react";
 
 // @mui material components
 import Divider from "@mui/material/Divider";
@@ -14,6 +15,21 @@ import Paper from "@mui/material/Paper";
 import Box from "@mui/material/Box";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
+import Checkbox from "@mui/material/Checkbox";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import IconButton from "@mui/material/IconButton";
+import AddCircleOutlineIcon from "@mui/icons-material/AddCircleOutline";
+import RemoveCircleOutlineIcon from "@mui/icons-material/RemoveCircleOutline";
+import SendIcon from "@mui/icons-material/Send";
+
+import {
+  LineChart,
+  Line,
+  CartesianGrid,
+  XAxis,
+  YAxis,
+  Tooltip,
+} from "recharts";
 
 // Material Dashboard 2 React components
 import MDBox from "components/MDBox";
@@ -25,9 +41,14 @@ import Footer from "examples/Footer";
 
 function COM() {
   const [selectedCommand, setSelectedCommand] = useState(null);
-  const [selectedTelemetryRequest, setSelectedTelemetryRequest] =
-    useState(null);
+  const [commandsToSend, setCommandsToSend] = useState([]);
   const [actionLog, setActionLog] = useState([]);
+  const [checkedCategories, setCheckedCategories] = useState({
+    EPS: true,
+    COM: true,
+    ADCS: true,
+    CAM: true,
+  });
 
   // Commands and Telemetry Requests
   const telecommands = [
@@ -55,14 +76,10 @@ function COM() {
       name: "Set Receive Config",
       command: "com_cmd_set_config_rx_cb",
     },
-  ];
-
-  const telemetryRequests = [
     { name: "Get Housekeeping", command: "com_telem_hk_get_cb" },
     { name: "Get Telemetry CMD", command: "com_telem_hk_cmd_get_cb" },
   ];
 
-  // Preset Telecommands
   const presetCommands = [
     {
       name: "Get System Config",
@@ -78,16 +95,10 @@ function COM() {
     },
   ];
 
-  // Preset Telemetry Requests
-  const presetTelemetryRequests = [
-    { name: "Get Housekeeping", command: "com_telem_hk_get_cb" },
-    { name: "Get Telemetry CMD", command: "com_telem_hk_cmd_get_cb" },
-  ];
-
   const handleSendCommand = async (command) => {
     try {
       const response = await axios.post(
-        "http://" + window.location.hostname + ":8000/com",
+        "http://" + window.location.hostname + ":8000/com/command",
         { command }
       );
       logAction(
@@ -100,21 +111,28 @@ function COM() {
     }
   };
 
-  const handleSendTelemetryRequest = async (request) => {
-    try {
-      const response = await axios.post(
-        "http://" + window.location.hostname + ":8000/com",
-        {
-          request,
-        }
-      );
-      logAction(
-        `${request} sent successfully. Response: ${JSON.stringify(
-          response.data
-        )}`
-      );
-    } catch (error) {
-      logAction(`Error sending ${request}: ${error}`);
+  // Add or remove commands/telemetry from the list to send
+  const modifyList = (item, listType, action) => {
+    setActionLog((prevLog) => [
+      ...prevLog,
+      `${new Date().toLocaleTimeString()} ${
+        action === "add" ? "Added" : "Removed"
+      } ${item} to ${listType}`,
+    ]);
+    setCommandsToSend((prevList) =>
+      action === "add"
+        ? [...prevList, item]
+        : prevList.filter((cmd) => cmd !== item)
+    );
+  };
+
+  // Send all commands/telemetry requests
+  const handleSendAll = async (listType) => {
+    if (listType === "commands") {
+      for (const command of commandsToSend) {
+        await handleSendCommand(command);
+      }
+      setCommandsToSend([]);
     }
   };
 
@@ -123,6 +141,27 @@ function COM() {
     const timestamp = new Date().toLocaleTimeString();
     setActionLog((prevLog) => [...prevLog, `${timestamp} ${action}`]);
   };
+
+  const toggleCategory = (category) => {
+    setCheckedCategories((prevCategories) => ({
+      ...prevCategories,
+      [category]: !prevCategories[category],
+    }));
+  };
+
+  const [dataRates, setDataRates] = useState([]);
+
+  useEffect(() => {
+    // Fetch data rates from the backend when the component mounts
+    axios
+      .get("http://" + window.location.hostname + ":8000/com/getRate")
+      .then((response) => {
+        setDataRates(response.data.data_rates);
+      })
+      .catch((error) => {
+        console.error("Error fetching data rates:", error);
+      });
+  }, []);
 
   return (
     <DashboardLayout>
@@ -133,7 +172,9 @@ function COM() {
             <Card>
               <MDBox p={3}>
                 {/* Telecommand List with Scrollable View */}
-                <Typography variant="h6">Telecommands</Typography>
+                <Typography variant="h6">
+                  Telecommands & Telemetry Requests
+                </Typography>
                 <Box
                   display="flex"
                   justifyContent="space-between"
@@ -165,6 +206,9 @@ function COM() {
                       ))}
                     </List>
                   </Box>
+                  <List component={Paper}>
+                    {/* HERE SHOULD BE THE SCHEDULED COMMANDS BEFORE THEY ARE SENT YOU SHOULD BE ABLE TO ADD AND REMOVE THEM.*/}
+                  </List>
                   <Box
                     display="flex"
                     flexDirection="column"
@@ -173,17 +217,18 @@ function COM() {
                     <Button
                       variant="contained"
                       color="primary"
-                      onClick={() => handleSendCommand(selectedCommand)}
-                      disabled={!selectedCommand}
+                      endIcon={<SendIcon />}
+                      onClick={() => handleSendAll("commands")}
+                      disabled={commandsToSend.length === 0}
                       sx={{
                         mb: 1,
                         width: "200px",
                         color: "common.black",
-                        backgroundColor: "grey.300",
+                        backgroundColor: "green.300",
                         "&:hover": { backgroundColor: "primary.main" },
                       }}
                     >
-                      Send Telecommand
+                      Send Command(s)
                     </Button>
                     {presetCommands.map((presetCommand, index) => (
                       <Button
@@ -204,98 +249,71 @@ function COM() {
                     ))}
                   </Box>
                 </Box>
-
-                {/* Divider between categories */}
-                <MDBox mt={4} mb={2}>
-                  <Divider />
-                </MDBox>
-
-                {/* Telemetry Request List with Scrollable View */}
-                <Typography variant="h6">Telemetry Requests</Typography>
-                <Box
-                  display="flex"
-                  justifyContent="space-between"
-                  alignItems="flex-start"
-                  mt={2}
+                {/* Add the new + and - buttons */}
+                <IconButton
+                  color="primary"
+                  onClick={() => modifyList(selectedCommand, "commands", "add")}
+                  disabled={!selectedCommand}
                 >
-                  <Box
-                    sx={{
-                      width: "70%",
-                      maxHeight: 200,
-                      overflow: "auto",
-                      mr: 2,
-                      border: "1px solid lightgrey",
-                      borderRadius: "4px",
-                    }}
-                  >
-                    <List component={Paper}>
-                      {telemetryRequests.map((request, index) => (
-                        <ListItem key={index} disablePadding>
-                          <ListItemButton
-                            selected={
-                              selectedTelemetryRequest === request.command
-                            }
-                            onClick={() =>
-                              setSelectedTelemetryRequest(request.command)
-                            }
-                          >
-                            <ListItemText primary={request.name} />
-                          </ListItemButton>
-                        </ListItem>
-                      ))}
-                    </List>
-                  </Box>
-                  <Box
-                    display="flex"
-                    flexDirection="column"
-                    alignItems="flex-start"
-                  >
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={() =>
-                        handleSendTelemetryRequest(selectedTelemetryRequest)
-                      }
-                      disabled={!selectedTelemetryRequest}
-                      sx={{
-                        mb: 1,
-                        width: "200px",
-                        color: "common.black",
-                        backgroundColor: "grey.300",
-                        "&:hover": { backgroundColor: "primary.main" },
-                      }}
-                    >
-                      Send Request
-                    </Button>
-                    {presetTelemetryRequests.map((presetRequest, index) => (
-                      <Button
-                        key={index}
-                        variant="contained"
-                        color="secondary"
-                        onClick={() =>
-                          handleSendTelemetryRequest(presetRequest.command)
-                        }
-                        sx={{
-                          mb: 1,
-                          width: "200px",
-                          color: "common.black",
-                          backgroundColor: "green.300",
-                          "&:hover": { backgroundColor: "primary.main" },
-                        }}
-                      >
-                        {presetRequest.name}
-                      </Button>
-                    ))}
-                  </Box>
-                </Box>
+                  <AddCircleOutlineIcon />
+                </IconButton>
+                <IconButton
+                  color="secondary"
+                  onClick={() =>
+                    modifyList(selectedCommand, "commands", "remove")
+                  }
+                  disabled={
+                    !selectedCommand ||
+                    !commandsToSend.includes(selectedCommand)
+                  }
+                >
+                  <RemoveCircleOutlineIcon />
+                </IconButton>
               </MDBox>
             </Card>
+            <MDBox mt={4}>
+              {/* Data Rate Visualization */}
+              <Card>
+                <MDBox p={3}>
+                  <Typography variant="h6">Data Rate Over Time</Typography>
+                  <LineChart width={600} height={300} data={dataRates}>
+                    <Line
+                      type="monotone"
+                      dataKey="data_rate"
+                      stroke="#8884d8"
+                    />
+                    <CartesianGrid stroke="#ccc" />
+                    {/*<XAxis dataKey="timestamp" />*/}
+                    <YAxis />
+                    <Tooltip />
+                  </LineChart>
+                </MDBox>
+              </Card>
+            </MDBox>
           </Grid>
 
           <Grid item xs={12} md={4}>
+            {/* Filter checkboxes */}
+            <Box
+              sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}
+            >
+              {Object.keys(checkedCategories).map((category) => (
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={checkedCategories[category]}
+                      onChange={() => toggleCategory(category)}
+                    />
+                  }
+                  label={category}
+                  key={category}
+                />
+              ))}
+            </Box>
+
             {/* Action Log Window */}
             <Card>
-              <MDBox p={2} sx={{ height: "600px", overflow: "auto" }}>
+              <MDBox p={2} sx={{ height: "700px", overflow: "auto" }}>
                 {actionLog.map((log, index) => (
                   <MDBox
                     key={index}

@@ -12,7 +12,7 @@ logger = logging.getLogger(__name__)
 
 
 @csrf_exempt
-def obc_view(request):
+def adcs_view(request):
     if request.method != "POST":
         return JsonResponse({"error": "Unsupported request method."}, status=405)
 
@@ -22,9 +22,7 @@ def obc_view(request):
             tlsCAFile=certifi.where(),
         )
         db = client.myDatabase
-        collection = db.obc_collection
-
-        # logger.info("Testing logger in obc_view")
+        collection = db.adcs_collection
 
         # Parse the request data
         request_data = json.loads(request.body)
@@ -42,21 +40,21 @@ def obc_view(request):
         # Using a context manager for socket operations
         with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
             client_socket.connect(server_address)
-            logger.info("Connected to the server.")
 
-            formatted_data = f"{10},{1},{text_to_send}"
+            formatted_data = f"{10},{5},{text_to_send}"
             client_socket.send(formatted_data.encode("utf-8"))
 
             # Wait for and receive acknowledgment from the server
             acknowledgment = client_socket.recv(1024)
-            # logger.info(f"Server Acknowledgment: {acknowledgment.decode('utf-8')}")
 
-            # Convert the acknowledgment to a Python dictionary
+            # Ensure acknowledgment data is in JSON format
             try:
                 acknowledgment_data = json.loads(acknowledgment.decode("utf-8"))
-            except json.JSONDecodeError:
+                if not isinstance(acknowledgment_data, dict):
+                    raise ValueError("Acknowledgment data is not a dictionary")
+            except (json.JSONDecodeError, ValueError) as e:
                 return JsonResponse(
-                    {"error": "Invalid acknowledgment format."}, status=500
+                    {"error": f"Invalid acknowledgment format: {str(e)}"}, status=500
                 )
 
             # Insert the acknowledgment data into MongoDB
@@ -80,7 +78,7 @@ def obc_view(request):
 
 
 @csrf_exempt
-def fetch_obc_housekeeping_data(request):
+def fetch_telemetry(request):
     if request.method != "GET":
         return JsonResponse({"error": "Unsupported request method."}, status=405)
 
@@ -89,29 +87,28 @@ def fetch_obc_housekeeping_data(request):
         tlsCAFile=certifi.where(),
     )
     db = client.myDatabase
-    collection = db.obc_collection
+    collection = db.adcs_collection
 
-    # Fetch OBC housekeeping telemetry data
-    documents = collection.find({"telemetry": {"$exists": True}})
+    # Fetch housekeeping data from MongoDB
+    documents = collection.find({"housekeeping_data": {"$exists": True}})
 
     # Prepare the dataset
-    telemetry_data = [
+    hk_data = [
         {
-            "timestamp": doc["telemetry"]["Timestamp"],
-            "cpu_load": doc["telemetry"]["CPU_Load"],
-            "memory_usage": doc["telemetry"]["Memory_Usage"],
-            "temperature": doc["telemetry"]["Temperature_Celsius"],
-            "power_status": doc["telemetry"]["Power_Status"],
-            "active_processes": doc["telemetry"]["Active_Processes"],
+            "timestamp": doc["housekeeping_data"]["timestamp"],
+            "temperature": doc["housekeeping_data"]["temperature"],
+            "power_usage": doc["housekeeping_data"]["power_usage"],
+            "orientation": doc["housekeeping_data"]["orientation"],
         }
         for doc in documents
     ]
 
-    return JsonResponse({"housekeeping_data": telemetry_data})
+    # Return the dataset
+    return JsonResponse({"hk_data": hk_data})
 
 
 @csrf_exempt
-def fetch_obc_telemetry_command_data(request):
+def fetch_operational(request):
     if request.method != "GET":
         return JsonResponse({"error": "Unsupported request method."}, status=405)
 
@@ -120,22 +117,21 @@ def fetch_obc_telemetry_command_data(request):
         tlsCAFile=certifi.where(),
     )
     db = client.myDatabase
-    collection = db.obc_collection
+    collection = db.adcs_collection
 
-    # Fetch OBC telemetry command data
-    documents = collection.find({"telemetry_command_data": {"$exists": True}})
+    # Fetch command data from MongoDB
+    documents = collection.find({"command_data": {"$exists": True}})
 
     # Prepare the dataset
-    command_data = [
+    cmd_data = [
         {
-            "timestamp": doc["telemetry_command_data"]["Timestamp"],
-            "last_command": doc["telemetry_command_data"]["Last_Command"],
-            "command_success_rate": doc["telemetry_command_data"][
-                "Command_Success_Rate"
-            ],
-            "recent_errors": doc["telemetry_command_data"]["Recent_Errors"],
+            "timestamp": doc["command_data"]["timestamp"],
+            "position": doc["command_data"]["position"],
+            "velocity": doc["command_data"]["velocity"],
+            "maneuver_count": doc["command_data"]["maneuver_count"],
         }
         for doc in documents
     ]
 
-    return JsonResponse({"command_data": command_data})
+    # Return the dataset
+    return JsonResponse({"cmd_data": cmd_data})

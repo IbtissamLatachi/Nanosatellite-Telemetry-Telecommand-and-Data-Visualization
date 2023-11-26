@@ -173,7 +173,15 @@ def com_cmd_get_config_sys_cb():
     csp_address = random.randint(1, 10)
     i2c_enabled = random.choice([True, False])
     can_enabled = random.choice([True, False])
-    return f"System Config: [CSP Address: {csp_address}, I2C Enabled: {i2c_enabled}, CAN Enabled: {can_enabled}]"
+    modulation_type = random.choice(["FSK", "OMSK", "QPSK"])
+    return {
+        "system_config": {
+            "CSP_Address": csp_address,
+            "I2C_Enabled": i2c_enabled,
+            "CAN_Enabled": can_enabled,
+            "Modulation_Type": modulation_type,
+        }
+    }
 
 
 # COM Command: Set System Configuration
@@ -181,51 +189,103 @@ def com_cmd_set_config_sys_cb():
     csp_address = random.randint(1, 10)
     i2c_enabled = random.choice([True, False])
     can_enabled = random.choice([True, False])
-    return f"System Config Set: [CSP Address: {csp_address}, I2C Enabled: {i2c_enabled}, CAN Enabled: {can_enabled}]"
+    modulation_type = random.choice(["FSK", "OMSK", "QPSK"])
+    return {
+        "system_config_set": {
+            "CSP_Address": csp_address,
+            "I2C_Enabled": i2c_enabled,
+            "CAN_Enabled": can_enabled,
+            "Modulation_Type": modulation_type,
+        }
+    }
 
 
 # COM Command: Get Transmit Configuration
 def com_cmd_get_config_tx_cb():
+    timestamp = datetime.datetime.now().isoformat()
     tx_power = random.randint(1, 5)  # Arbitrary TX power level
     beacon_interval = random.randint(5, 15)  # Beacon interval in seconds
-    return (
-        f"Transmit Config: [TX Power: {tx_power}, Beacon Interval: {beacon_interval}s]"
-    )
+    data_rate = random.randint(1, 10)  # Data rate in Mbps
+    modulation_type = random.choice(["FSK", "OMSK", "QPSK"])
+    return {
+        "transmit_config": {
+            "Timestamp": timestamp,
+            "TX_Power": tx_power,
+            "Beacon_Interval": beacon_interval,
+            "Data_Rate_Mbps": data_rate,
+            "Modulation_Type": modulation_type,
+        }
+    }
 
 
 # COM Command: Set Transmit Configuration
 def com_cmd_set_config_tx_cb():
+    timestamp = datetime.datetime.now().isoformat()
     tx_power = random.randint(1, 5)
     beacon_interval = random.randint(5, 15)
-    return f"Transmit Config Set: [TX Power: {tx_power}, Beacon Interval: {beacon_interval}s]"
+    data_rate = random.randint(1, 10)  # Data rate in Mbps
+    modulation_type = random.choice(["FSK", "OMSK", "QPSK"])
+    return {
+        "transmit_config_set": {
+            "Timestamp": timestamp,
+            "TX_Power": tx_power,
+            "Beacon_Interval": beacon_interval,
+            "Data_Rate_Mbps": data_rate,
+            "Modulation_Type": modulation_type,
+        }
+    }
 
 
 # COM Command: Get Receive Configuration
 def com_cmd_get_config_rx_cb():
+    timestamp = datetime.datetime.now().isoformat()
     frequency = random_frequency()
     baudrate = random.choice([1200, 2400, 4800, 9600])
-    return f"Receive Config: [Frequency: {frequency} Hz, Baudrate: {baudrate}]"
+    modulation_type = random.choice(["FSK", "OMSK", "QPSK"])
+    data_rate = random.randint(1, 10)  # Data rate in Mbps
+    return {
+        "receive_config": {
+            "Timestamp": timestamp,
+            "Frequency_Hz": frequency,
+            "Baudrate": baudrate,
+            "Modulation_Type": modulation_type,
+            "Data_Rate_Mbps": data_rate,
+        }
+    }
 
 
 # COM Command: Set Receive Configuration
 def com_cmd_set_config_rx_cb():
+    timestamp = datetime.datetime.now().isoformat()
     frequency = random_frequency()
     baudrate = random.choice([1200, 2400, 4800, 9600])
-    return f"Receive Config Set: [Frequency: {frequency} Hz, Baudrate: {baudrate}]"
+    modulation_type = random.choice(["FSK", "OMSK", "QPSK"])
+    data_rate = random.randint(1, 10)  # Data rate in Mbps
+    return {
+        "receive_config_set": {
+            "Timestamp": timestamp,
+            "Frequency_Hz": frequency,
+            "Baudrate": baudrate,
+            "Modulation_Type": modulation_type,
+            "Data_Rate_Mbps": data_rate,
+        }
+    }
 
 
 # COM Telemetry: Housekeeping Data
 def com_telem_hk_get_cb():
     error_occurred = simulate_error()
     return {
-        "timestamp": random_datetime(),
-        "board_temp": random.randint(-10, 50),
-        "pa_temp": random.randint(-10, 60),
-        "last_rssi": random.randint(-120, 0),
-        "signal_quality": random.randint(0, 100),  # Simulated signal quality
-        "uptime": random.randint(0, 10000),
-        "error": error_occurred,
-        "error_code": "E03" if error_occurred else "None",
+        "housekeeping_data": {
+            "timestamp": random_datetime(),
+            "board_temp": random.randint(-10, 50),
+            "pa_temp": random.randint(-10, 60),
+            "last_rssi": random.randint(-120, 0),
+            "signal_quality": random.randint(0, 100),
+            "uptime": random.randint(0, 10000),
+            "error": error_occurred,
+            "error_code": "E03" if error_occurred else "None",
+        }
     }
 
 
@@ -233,16 +293,16 @@ def com_telem_hk_get_cb():
 def com_telem_hk_cmd_get_cb():
     error_occurred = simulate_error()
     return {
-        "timestamp": random_datetime(),
-        "tx_count": random.randint(50, 200),
-        "rx_count": random.randint(50, 200),
-        "tx_bytes": random_data_volume(),
-        "rx_bytes": random_data_volume(),
-        "command_ack_rate": random.uniform(
-            0, 1
-        ),  # Simulated command acknowledgment rate
-        "error": error_occurred,
-        "error_code": "E04" if error_occurred else "None",
+        "command_data": {
+            "timestamp": random_datetime(),
+            "tx_count": random.randint(50, 200),
+            "rx_count": random.randint(50, 200),
+            "tx_bytes": random_data_volume(),
+            "rx_bytes": random_data_volume(),
+            "command_ack_rate": random.uniform(0, 1),
+            "error": error_occurred,
+            "error_code": "E04" if error_occurred else "None",
+        }
     }
 
 
@@ -332,42 +392,54 @@ def cam_telem_hk_cmd_get_cb():
 # ADCS Command: Set Timeout
 def adcs_cmd_set_timeout_cb():
     new_timeout = random.randint(60, 180)  # Timeout in seconds
-    return f"Timeout Set: [New Timeout: {new_timeout}s, Status: Updated]"
+    return {"timeout_set": {"new_timeout": new_timeout, "status": "Updated"}}
 
 
 # ADCS Command: Get State
 def adcs_cmd_get_state_cb():
     mode = random.choice(["Stable", "Maneuver", "Drift"])
-    orientation = random_orientation()
-    return f"ADCS State: [Mode: {mode}, Orientation: {orientation}]"
+    orientation = random_orientation()  # Assuming this returns a dictionary
+    angular_velocity = [random.uniform(-1, 1) for _ in range(3)]
+    return {
+        "adcs_state": {
+            "mode": mode,
+            "orientation": orientation,
+            "angular_velocity": angular_velocity,
+        }
+    }
 
 
 # ADCS Telemetry: Housekeeping Data
 def adcs_telem_hk_get_cb():
     error_occurred = simulate_error()
     return {
-        "timestamp": random_datetime(),
-        "temperature": random.randint(-40, 80),
-        "power_usage": random.randint(10, 100),
-        "orientation": random_orientation(),
-        "angular_velocity": [
-            random.uniform(-1, 1) for _ in range(3)
-        ],  # Angular velocity in degrees/s
-        "error": error_occurred,
-        "error_code": "E07" if error_occurred else "None",
+        "housekeeping_data": {
+            "timestamp": random_datetime(),
+            "temperature": random.randint(-40, 80),
+            "power_usage": random.randint(10, 100),
+            "orientation": random_orientation(),
+            "angular_velocity": [random.uniform(-1, 1) for _ in range(3)],
+            "error": error_occurred,
+            "error_code": "E07" if error_occurred else "None",
+        }
     }
 
 
 # ADCS Telemetry: Command Data
 def adcs_telem_hk_cmd_get_cb():
     error_occurred = simulate_error()
+    position = random_position()  # Assuming this returns a dictionary
+    velocity = [random.uniform(-5, 5) for _ in range(3)]
+    maneuver_count = random.randint(0, 10)
     return {
-        "timestamp": random_datetime(),
-        "position": random_position(),
-        "velocity": [random.uniform(-5, 5) for _ in range(3)],
-        "maneuver_count": random.randint(0, 10),  # Number of maneuvers performed
-        "error": error_occurred,
-        "error_code": "E08" if error_occurred else "None",
+        "command_data": {
+            "timestamp": random_datetime(),
+            "position": position,
+            "velocity": velocity,
+            "maneuver_count": maneuver_count,
+            "error": error_occurred,
+            "error_code": "E08" if error_occurred else "None",
+        }
     }
 
 
@@ -377,14 +449,21 @@ def obc_cmd_get_masat_state_cb():
     temp = random.randint(-20, 40)  # Temperature in Celsius
     power_status = random.choice(["Nominal", "Low", "Critical"])
     current_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-    return f"MASAT State: [Mode: {mode}, Temp: {temp}C, Power: {power_status}, Time: {current_time}]"
+    return {
+        "masat_state": {
+            "Mode": mode,
+            "Temperature_Celsius": temp,
+            "Power_Status": power_status,
+            "Time": current_time,
+        }
+    }
 
 
 # OBC Command: Load Image
 def obc_cmd_load_imag_cb():
     image_id = random.randint(1, 100)
     size = random.uniform(1.0, 5.0)  # Image size in MB
-    return f"Image Load: [Status: Success, Image ID: {image_id}, Size: {size:.1f}MB]"
+    return {"image_load": {"Status": "Success", "Image_ID": image_id, "Size_MB": size}}
 
 
 # OBC Command: Track Target
@@ -392,62 +471,72 @@ def obc_cmd_track_target_cb():
     target_id = random.randint(10000, 99999)
     status = random.choice(["Locked", "Searching", "Lost"])
     coordinates = [random.uniform(-180, 180), random.uniform(-90, 90)]  # Lat, Long
-    return f"Tracking Target: [Target ID: {target_id}, Status: {status}, Coordinates: {coordinates}]"
+    return {
+        "track_target": {
+            "Target_ID": target_id,
+            "Status": status,
+            "Coordinates": coordinates,
+        }
+    }
 
 
 # OBC Command: Time Sync
 def obc_cmd_timesync_cb():
     synced_time = datetime.datetime.now().strftime("%Y-%m-%dT%H:%M:%SZ")
-    return f"Time Sync: [Status: Success, Synced Time: {synced_time}]"
+    return {"time_sync": {"Status": "Success", "Synced_Time": synced_time}}
 
 
 # OBC Command: Jump to RAM
 def obc_cmd_jump_ram_cb():
     address = hex(random.randint(0x1000, 0xFFFF))
-    return f"Jump to RAM: [Address: {address}, Status: Executed]"
+    return {"jump_to_ram": {"Address": address, "Status": "Executed"}}
 
 
 # OBC Command: Set Boot Configuration
 def obc_cmd_boot_conf_cb():
     new_boot_mode = random.choice(["Science Mode", "Safe Mode", "Bootloader"])
-    return f"Boot Config Set: [New Boot Mode: {new_boot_mode}, Status: Updated]"
+    return {"boot_config_set": {"New_Boot_Mode": new_boot_mode, "Status": "Updated"}}
 
 
 # OBC Command: Delete Configuration
 def obc_cmd_conf_del_cb():
     config_id = random.randint(1, 10)
-    return f"Config Deleted: [Config ID: {config_id}, Status: Removed]"
+    return {"config_deleted": {"Config_ID": config_id, "Status": "Removed"}}
 
 
 # OBC Command: RAM to ROM
 def obc_cmd_ram_to_rom_cb():
     bytes_transferred = random.randint(1024, 4096)  # Bytes transferred
-    return f"RAM to ROM: [Status: Completed, Bytes Transferred: {bytes_transferred}]"
+    return {
+        "ram_to_rom": {"Status": "Completed", "Bytes_Transferred": bytes_transferred}
+    }
 
 
 # OBC Command: Get Boot Count
 def obc_cmd_boot_count_get_cb():
     current_count = random.randint(1, 100)
-    return f"Boot Count: [Current Count: {current_count}]"
+    return {"boot_count": {"Current_Count": current_count}}
 
 
 # OBC Command: Reset Boot Count
 def obc_cmd_boot_count_reset_cb():
-    return "Boot Count Reset: [Status: Reset, New Count: 0]"
+    return {"boot_count_reset": {"Status": "Reset", "New_Count": 0}}
 
 
 # OBC Command: Get Persistent Telemetry
 def obc_telem_hk_persist_get_cb():
     error_occurred = simulate_error()
     return {
-        "timestamp": random_datetime(),
-        "boot_count": random.randint(1, 100),
-        "resets": random.randint(1, 10),
-        "total_uptime": random.randint(0, 10000),  # Total uptime in seconds
-        "last_boot_reason": random.choice(["Power Cycle", "Watchdog", "Manual"]),
-        "config_change_count": random.randint(0, 50),  # Number of configuration changes
-        "error": error_occurred,
-        "error_code": "E09" if error_occurred else "None",
+        "persistent_telemetry": {
+            "Timestamp": random_datetime(),
+            "Boot_Count": random.randint(1, 100),
+            "Resets": random.randint(1, 10),
+            "Total_Uptime_Seconds": random.randint(0, 10000),
+            "Last_Boot_Reason": random.choice(["Power Cycle", "Watchdog", "Manual"]),
+            "Config_Change_Count": random.randint(0, 50),
+            "Error": error_occurred,
+            "Error_Code": "E09" if error_occurred else "None",
+        }
     }
 
 
@@ -455,16 +544,16 @@ def obc_telem_hk_persist_get_cb():
 def obc_telem_hk_get_cb():
     error_occurred = simulate_error()
     return {
-        "timestamp": random_datetime(),
-        "cpu_load": random.uniform(0, 1),  # CPU load as a fraction of total capacity
-        "memory_usage": random.uniform(
-            0, 1
-        ),  # Memory usage as a fraction of total capacity
-        "temperature": random.randint(-20, 70),  # Temperature in Celsius
-        "power_status": random.choice(["Nominal", "Low", "Critical"]),
-        "active_processes": random.randint(0, 100),  # Number of active processes
-        "error": error_occurred,
-        "error_code": "E10" if error_occurred else "None",
+        "telemetry": {
+            "Timestamp": random_datetime(),
+            "CPU_Load": random.uniform(0, 1),
+            "Memory_Usage": random.uniform(0, 1),
+            "Temperature_Celsius": random.randint(-20, 70),
+            "Power_Status": random.choice(["Nominal", "Low", "Critical"]),
+            "Active_Processes": random.randint(0, 100),
+            "Error": error_occurred,
+            "Error_Code": "E10" if error_occurred else "None",
+        }
     }
 
 
@@ -472,14 +561,14 @@ def obc_telem_hk_get_cb():
 def obc_telem_hk_cmd_get_cb():
     error_occurred = simulate_error()
     return {
-        "timestamp": random_datetime(),
-        "last_command": random.choice(
-            ["CMD_A", "CMD_B", "CMD_C"]
-        ),  # Simulated last command
-        "command_success_rate": random.uniform(0, 1),  # Simulated command success rate
-        "recent_errors": random.randint(0, 5),  # Number of recent errors
-        "error": error_occurred,
-        "error_code": "E11" if error_occurred else "None",
+        "telemetry_command_data": {
+            "Timestamp": random_datetime(),
+            "Last_Command": random.choice(["CMD_A", "CMD_B", "CMD_C"]),
+            "Command_Success_Rate": random.uniform(0, 1),
+            "Recent_Errors": random.randint(0, 5),
+            "Error": error_occurred,
+            "Error_Code": "E11" if error_occurred else "None",
+        }
     }
 
 
