@@ -23,5 +23,6 @@ urlpatterns = [
     path("cam", include("cam.urls")),
     path("com", include("com.urls")),
     path("adcs", include("adcs.urls")),
+    path("dashboard", include("dashboard.urls")),
     path("admin/", admin.site.urls),
 ]

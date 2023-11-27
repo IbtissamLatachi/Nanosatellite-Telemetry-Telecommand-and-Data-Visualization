@@ -1,5 +1,5 @@
 /**
- * @fileoverview This file is the entry point for the React application.
+ * @fileoverview This file is the entry point for the React app.
  * It is responsible for rendering the React application into the DOM.
  * It is also responsible for setting up the React context providers.
  */

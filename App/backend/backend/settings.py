@@ -61,10 +61,17 @@ CORS_ALLOW_ALL_ORIGINS = (
 CORS_ALLOWED_ORIGINS = [
     "https://localhost:5173",  # Add the origin of the React frontend
     "https://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
     # Add other origins as needed
 ]
 
-CSRF_TRUSTED_ORIGINS = ["http://localhost:5173", "http://127.0.0.1:5173"]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]
 
 # Configure the CORS_ALLOW_CREDENTIALS setting if the React frontend sends credentials.
 CORS_ALLOW_CREDENTIALS = True
