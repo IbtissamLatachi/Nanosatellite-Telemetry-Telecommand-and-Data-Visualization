@@ -18,27 +18,32 @@ function Dashboard() {
   const [countdown, setCountdown] = useState("");
 
   useEffect(() => {
-    // Fetch the next satellite pass
+    // Function to fetch the next satellite pass
     const fetchNextPass = async () => {
       try {
         const response = await axios.get(
           "http://" + window.location.hostname + ":8000/dashboard/next-pass"
-        ); // Adjust the API endpoint
+        );
         setNextPass(response.data);
-        updateCountdown(response.data.aos); // 'aos' is the datetime of Acquisition of Signal
       } catch (error) {
         console.error("Error fetching satellite pass data:", error);
       }
     };
 
+    // Fetch the next satellite pass initially and after every pass ends
     fetchNextPass();
+    const interval = setInterval(() => {
+      fetchNextPass();
+    }, 1000 * 60); // Check for the next pass every minute
+
+    return () => clearInterval(interval);
   }, []);
 
   useEffect(() => {
     // Update countdown every second
     const interval = setInterval(() => {
       if (nextPass) {
-        updateCountdown(nextPass.aos);
+        updateCountdown(nextPass.aos, nextPass.los);
       }
     }, 1000);
 
@@ -46,19 +51,31 @@ function Dashboard() {
   }, [nextPass]);
 
   // Function to update the countdown
-  const updateCountdown = (aosTime) => {
+  const updateCountdown = (aosTime, losTime) => {
     const aos = new Date(aosTime);
+    const los = new Date(losTime);
     const now = new Date();
-    const timeLeft = aos - now;
 
-    if (timeLeft > 0) {
-      const hours = Math.floor((timeLeft / (1000 * 60 * 60)) % 24);
-      const minutes = Math.floor((timeLeft / 1000 / 60) % 60);
-      const seconds = Math.floor((timeLeft / 1000) % 60);
-      setCountdown(`${hours}h ${minutes}m ${seconds}s`);
+    if (now < aos) {
+      // Before the pass starts
+      setCountdown("Next pass in: " + formatTime(aos - now));
+    } else if (now <= los) {
+      // During the pass
+      setCountdown(
+        "Pass in progress. Time until LOS: " + formatTime(los - now)
+      );
     } else {
-      setCountdown("Pass is currently happening or has finished.");
+      // After the pass ends
+      setCountdown("Waiting for the next pass...");
     }
+  };
+
+  // Helper function to format time
+  const formatTime = (milliseconds) => {
+    const hours = Math.floor((milliseconds / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((milliseconds / 1000 / 60) % 60);
+    const seconds = Math.floor((milliseconds / 1000) % 60);
+    return `${hours}h ${minutes}m ${seconds}s`;
   };
 
   return (
@@ -69,7 +86,7 @@ function Dashboard() {
           <Grid item xs={12}>
             <Card>
               <MDBox p={3}>
-                <h2>Next Satellite Pass Countdown:</h2>
+                <h2>Satellite Pass Countdown:</h2>
                 <p>{countdown}</p>
               </MDBox>
             </Card>
