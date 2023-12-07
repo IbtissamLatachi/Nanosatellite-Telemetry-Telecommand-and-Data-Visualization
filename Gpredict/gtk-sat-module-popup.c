@@ -39,30 +39,28 @@
 #include "sat-log.h"
 #include "sgpsdp/sgp4sdp4.h"
 
+extern GtkWidget *app; /* in main.c */
 
-extern GtkWidget *app;          /* in main.c */
-
-static void     config_cb(GtkWidget * menuitem, gpointer data);
-static void     clone_cb(GtkWidget * menuitem, gpointer data);
-static void     docking_state_cb(GtkWidget * menuitem, gpointer data);
-static void     screen_state_cb(GtkWidget * menuitem, gpointer data);
-static void     sat_selected_cb(GtkWidget * menuitem, gpointer data);
-static void     sky_at_glance_cb(GtkWidget * menuitem, gpointer data);
-static void     tmgr_cb(GtkWidget * menuitem, gpointer data);
-static void     rigctrl_cb(GtkWidget * menuitem, gpointer data);
-static void     rotctrl_cb(GtkWidget * menuitem, gpointer data);
-static void     delete_cb(GtkWidget * menuitem, gpointer data);
-static void     autotrack_cb(GtkCheckMenuItem * menuitem, gpointer data);
-static void     tm_tc_cb(GtkWidget * menuitem, gpointer data);         /// line added here
-static void     close_cb(GtkWidget * menuitem, gpointer data);
-static void     name_changed(GtkWidget * widget, gpointer data);
-static void     destroy_rotctrl(GtkWidget * window, gpointer data);
-static void     destroy_rigctrl(GtkWidget * window, gpointer data);
-static void     destroy_skg(GtkWidget * window, gpointer data);
-static gint     window_delete(GtkWidget * widget, GdkEvent * event,
-                              gpointer data);
-static gint     sat_nickname_compare(const sat_t * a, const sat_t * b);
-
+static void config_cb(GtkWidget *menuitem, gpointer data);
+static void clone_cb(GtkWidget *menuitem, gpointer data);
+static void docking_state_cb(GtkWidget *menuitem, gpointer data);
+static void screen_state_cb(GtkWidget *menuitem, gpointer data);
+static void sat_selected_cb(GtkWidget *menuitem, gpointer data);
+static void sky_at_glance_cb(GtkWidget *menuitem, gpointer data);
+static void tmgr_cb(GtkWidget *menuitem, gpointer data);
+static void rigctrl_cb(GtkWidget *menuitem, gpointer data);
+static void rotctrl_cb(GtkWidget *menuitem, gpointer data);
+static void delete_cb(GtkWidget *menuitem, gpointer data);
+static void autotrack_cb(GtkCheckMenuItem *menuitem, gpointer data);
+static void tm_tc_cb(GtkWidget *menuitem, gpointer data); /// line added here
+static void close_cb(GtkWidget *menuitem, gpointer data);
+static void name_changed(GtkWidget *widget, gpointer data);
+static void destroy_rotctrl(GtkWidget *window, gpointer data);
+static void destroy_rigctrl(GtkWidget *window, gpointer data);
+static void destroy_skg(GtkWidget *window, gpointer data);
+static gint window_delete(GtkWidget *widget, GdkEvent *event,
+                          gpointer data);
+static gint sat_nickname_compare(const sat_t *a, const sat_t *b);
 
 /**
  * Create and run GtkSatModule popup menu.
@@ -75,15 +73,14 @@ static gint     sat_nickname_compare(const sat_t * a, const sat_t * b);
  * parent.
  *
  */
-void gtk_sat_module_popup(GtkSatModule * module)
+void gtk_sat_module_popup(GtkSatModule *module)
 {
-    GtkWidget      *menu;       /* The pop-up menu */
-    GtkWidget      *satsubmenu; /* Satellite selection submenu */
-    GtkWidget      *menuitem;   /* Widget used to create the menu items */
-    GList          *sats;
-    sat_t          *sat;
-    guint           i, n;
-
+    GtkWidget *menu;       /* The pop-up menu */
+    GtkWidget *satsubmenu; /* Satellite selection submenu */
+    GtkWidget *menuitem;   /* Widget used to create the menu items */
+    GList *sats;
+    sat_t *sat;
+    guint i, n;
 
     if ((module == NULL) || !IS_GTK_SAT_MODULE(module))
     {
@@ -144,7 +141,7 @@ void gtk_sat_module_popup(GtkSatModule * module)
     gtk_menu_item_set_submenu(GTK_MENU_ITEM(menuitem), satsubmenu);
 
     sats = g_hash_table_get_values(module->satellites);
-    sats = g_list_sort(sats, (GCompareFunc) sat_nickname_compare);
+    sats = g_list_sort(sats, (GCompareFunc)sat_nickname_compare);
 
     n = g_list_length(sats);
     for (i = 0; i < n; i++)
@@ -238,23 +235,22 @@ void gtk_sat_module_popup(GtkSatModule * module)
  * wrapper for gtk_sat_module_config_cb
  *
  */
-static void config_cb(GtkWidget * menuitem, gpointer data)
+static void config_cb(GtkWidget *menuitem, gpointer data)
 {
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
+    GtkSatModule *module = GTK_SAT_MODULE(data);
 
     if (module->rigctrlwin || module->rotctrlwin)
     {
-        GtkWidget      *dialog;
+        GtkWidget *dialog;
 
         /* FIXME: should offer option to close controllers */
         dialog = gtk_message_dialog_new(NULL, GTK_DIALOG_MODAL,
                                         GTK_MESSAGE_ERROR,
                                         GTK_BUTTONS_OK,
-                                        _
-                                        ("A module can not be configured while the "
-                                         "radio or rotator controller is active.\n\n"
-                                         "Please close the radio and rotator controllers "
-                                         "and try again."));
+                                        _("A module can not be configured while the "
+                                          "radio or rotator controller is active.\n\n"
+                                          "Please close the radio and rotator controllers "
+                                          "and try again."));
         gtk_dialog_run(GTK_DIALOG(dialog));
         gtk_widget_destroy(dialog);
     }
@@ -275,28 +271,27 @@ static void config_cb(GtkWidget * menuitem, gpointer data)
  * By default, the nes module will be opened but the user has the
  * possibility to override this in the dialog window.
  */
-static void clone_cb(GtkWidget * menuitem, gpointer data)
+static void clone_cb(GtkWidget *menuitem, gpointer data)
 {
-    GtkWidget      *dialog;
-    GtkWidget      *entry;
-    GtkWidget      *label;
-    GtkWidget      *toggle;
-    GtkWidget      *vbox;
-    GtkAllocation   aloc;
-    guint           response;
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
-    GtkSatModule   *newmod;
-    gchar          *source, *target;
-    gchar          *icon;       /* icon file name */
-    gchar          *title;      /* window title */
+    GtkWidget *dialog;
+    GtkWidget *entry;
+    GtkWidget *label;
+    GtkWidget *toggle;
+    GtkWidget *vbox;
+    GtkAllocation aloc;
+    guint response;
+    GtkSatModule *module = GTK_SAT_MODULE(data);
+    GtkSatModule *newmod;
+    gchar *source, *target;
+    gchar *icon;  /* icon file name */
+    gchar *title; /* window title */
 
     (void)menuitem;
 
     dialog = gtk_dialog_new_with_buttons(_("Clone Module"),
-                                         GTK_WINDOW(gtk_widget_get_toplevel
-                                                    (GTK_WIDGET(module))),
+                                         GTK_WINDOW(gtk_widget_get_toplevel(GTK_WIDGET(module))),
                                          GTK_DIALOG_MODAL |
-                                         GTK_DIALOG_DESTROY_WITH_PARENT,
+                                             GTK_DIALOG_DESTROY_WITH_PARENT,
                                          "_Cancel", GTK_RESPONSE_CANCEL,
                                          "_OK", GTK_RESPONSE_OK,
                                          NULL);
@@ -329,7 +324,6 @@ static void clone_cb(GtkWidget * menuitem, gpointer data)
     g_signal_connect(entry, "changed", G_CALLBACK(name_changed), dialog);
     gtk_box_pack_start(GTK_BOX(vbox), entry, FALSE, FALSE, 0);
 
-
     /* check button */
     toggle = gtk_check_button_new_with_label(_("Open module when created"));
     gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(toggle), TRUE);
@@ -337,7 +331,6 @@ static void clone_cb(GtkWidget * menuitem, gpointer data)
                                 _("If checked, the new module will be opened "
                                   "after it has been created"));
     gtk_box_pack_start(GTK_BOX(vbox), toggle, FALSE, FALSE, 20);
-
 
     gtk_widget_show_all(vbox);
 
@@ -354,7 +347,7 @@ static void clone_cb(GtkWidget * menuitem, gpointer data)
                     gtk_entry_get_text(GTK_ENTRY(entry)));
 
         /* build full file names */
-        gchar          *moddir = get_modules_dir();
+        gchar *moddir = get_modules_dir();
 
         source = g_strconcat(moddir, G_DIR_SEPARATOR_S,
                              module->name, ".mod", NULL);
@@ -388,7 +381,6 @@ static void clone_cb(GtkWidget * menuitem, gpointer data)
 
                     /* add to module manager */
                     mod_mgr_add_module(GTK_WIDGET(newmod), TRUE);
-
                 }
                 else
                 {
@@ -429,7 +421,6 @@ static void clone_cb(GtkWidget * menuitem, gpointer data)
 
                     /* show window */
                     gtk_widget_show_all(newmod->win);
-
                 }
             }
         }
@@ -467,13 +458,13 @@ static void clone_cb(GtkWidget * menuitem, gpointer data)
  * The text of the menu item will be changed corresponding to the
  * action that has been performed.
  */
-static void docking_state_cb(GtkWidget * menuitem, gpointer data)
+static void docking_state_cb(GtkWidget *menuitem, gpointer data)
 {
-    GtkWidget      *module = GTK_WIDGET(data);
-    GtkAllocation   aloc;
-    gint            w, h;
-    gchar          *icon;       /* icon file name */
-    gchar          *title;      /* window title */
+    GtkWidget *module = GTK_WIDGET(data);
+    GtkAllocation aloc;
+    gint w, h;
+    gchar *icon;  /* icon file name */
+    gchar *title; /* window title */
 
     (void)menuitem;
 
@@ -512,8 +503,8 @@ static void docking_state_cb(GtkWidget * menuitem, gpointer data)
         g_object_ref(module);
 
         /* we don't need the positions */
-        //GTK_SAT_MODULE (module)->vpanedpos = -1;
-        //GTK_SAT_MODULE (module)->hpanedpos = -1;
+        // GTK_SAT_MODULE (module)->vpanedpos = -1;
+        // GTK_SAT_MODULE (module)->hpanedpos = -1;
 
         /* undock from mod-mgr */
         mod_mgr_undock_module(module);
@@ -536,8 +527,7 @@ static void docking_state_cb(GtkWidget * menuitem, gpointer data)
         icon = icon_file_name("gpredict-icon.png");
         if (g_file_test(icon, G_FILE_TEST_EXISTS))
         {
-            gtk_window_set_icon_from_file(GTK_WINDOW
-                                          (GTK_SAT_MODULE(module)->win), icon,
+            gtk_window_set_icon_from_file(GTK_WINDOW(GTK_SAT_MODULE(module)->win), icon,
                                           NULL);
         }
         g_free(icon);
@@ -554,12 +544,10 @@ static void docking_state_cb(GtkWidget * menuitem, gpointer data)
         {
 
             gtk_window_move(GTK_WINDOW(GTK_SAT_MODULE(module)->win),
-                            g_key_file_get_integer(GTK_SAT_MODULE
-                                                   (module)->cfgdata,
+                            g_key_file_get_integer(GTK_SAT_MODULE(module)->cfgdata,
                                                    MOD_CFG_GLOBAL_SECTION,
                                                    MOD_CFG_WIN_POS_X, NULL),
-                            g_key_file_get_integer(GTK_SAT_MODULE
-                                                   (module)->cfgdata,
+                            g_key_file_get_integer(GTK_SAT_MODULE(module)->cfgdata,
                                                    MOD_CFG_GLOBAL_SECTION,
                                                    MOD_CFG_WIN_POS_Y, NULL));
         }
@@ -584,10 +572,8 @@ static void docking_state_cb(GtkWidget * menuitem, gpointer data)
         /* reparent time manager window if visible */
         if (GTK_SAT_MODULE(module)->tmgActive)
         {
-            gtk_window_set_transient_for(GTK_WINDOW
-                                         (GTK_SAT_MODULE(module)->tmgWin),
-                                         GTK_WINDOW(GTK_SAT_MODULE
-                                                    (module)->win));
+            gtk_window_set_transient_for(GTK_WINDOW(GTK_SAT_MODULE(module)->tmgWin),
+                                         GTK_WINDOW(GTK_SAT_MODULE(module)->win));
         }
 
         break;
@@ -600,8 +586,7 @@ static void docking_state_cb(GtkWidget * menuitem, gpointer data)
         /* reparent time manager window if visible */
         if (GTK_SAT_MODULE(module)->tmgActive)
         {
-            gtk_window_set_transient_for(GTK_WINDOW
-                                         (GTK_SAT_MODULE(module)->tmgWin),
+            gtk_window_set_transient_for(GTK_WINDOW(GTK_SAT_MODULE(module)->tmgWin),
                                          GTK_WINDOW(app));
         }
 
@@ -641,12 +626,12 @@ static void docking_state_cb(GtkWidget * menuitem, gpointer data)
  * This function is intended to toggle between FULLSCREEN
  * and WINDOW state.
  */
-static void screen_state_cb(GtkWidget * menuitem, gpointer data)
+static void screen_state_cb(GtkWidget *menuitem, gpointer data)
 {
-    GtkWidget      *module = GTK_WIDGET(data);
-    gint            w, h;
-    gchar          *icon;       /* icon file name */
-    gchar          *title;      /* window title */
+    GtkWidget *module = GTK_WIDGET(data);
+    gint w, h;
+    gchar *icon;  /* icon file name */
+    gchar *title; /* window title */
 
     (void)menuitem;
 
@@ -673,8 +658,7 @@ static void screen_state_cb(GtkWidget * menuitem, gpointer data)
         icon = icon_file_name("gpredict-icon.png");
         if (g_file_test(icon, G_FILE_TEST_EXISTS))
         {
-            gtk_window_set_icon_from_file(GTK_WINDOW
-                                          (GTK_SAT_MODULE(module)->win), icon,
+            gtk_window_set_icon_from_file(GTK_WINDOW(GTK_SAT_MODULE(module)->win), icon,
                                           NULL);
         }
         g_free(icon);
@@ -696,10 +680,8 @@ static void screen_state_cb(GtkWidget * menuitem, gpointer data)
         /* reparent time manager window if visible */
         if (GTK_SAT_MODULE(module)->tmgActive)
         {
-            gtk_window_set_transient_for(GTK_WINDOW
-                                         (GTK_SAT_MODULE(module)->tmgWin),
-                                         GTK_WINDOW(GTK_SAT_MODULE
-                                                    (module)->win));
+            gtk_window_set_transient_for(GTK_WINDOW(GTK_SAT_MODULE(module)->tmgWin),
+                                         GTK_WINDOW(GTK_SAT_MODULE(module)->win));
         }
         break;
 
@@ -717,9 +699,8 @@ static void screen_state_cb(GtkWidget * menuitem, gpointer data)
         gtk_window_unfullscreen(GTK_WINDOW(GTK_SAT_MODULE(module)->win));
 
         /* get stored size; use some standard size if not explicitly specified */
-        if (g_key_file_has_key
-            (GTK_SAT_MODULE(module)->cfgdata, MOD_CFG_GLOBAL_SECTION,
-             MOD_CFG_WIN_WIDTH, NULL))
+        if (g_key_file_has_key(GTK_SAT_MODULE(module)->cfgdata, MOD_CFG_GLOBAL_SECTION,
+                               MOD_CFG_WIN_WIDTH, NULL))
         {
             w = g_key_file_get_integer(GTK_SAT_MODULE(module)->cfgdata,
                                        MOD_CFG_GLOBAL_SECTION,
@@ -729,9 +710,8 @@ static void screen_state_cb(GtkWidget * menuitem, gpointer data)
         {
             w = 800;
         }
-        if (g_key_file_has_key
-            (GTK_SAT_MODULE(module)->cfgdata, MOD_CFG_GLOBAL_SECTION,
-             MOD_CFG_WIN_HEIGHT, NULL))
+        if (g_key_file_has_key(GTK_SAT_MODULE(module)->cfgdata, MOD_CFG_GLOBAL_SECTION,
+                               MOD_CFG_WIN_HEIGHT, NULL))
         {
             h = g_key_file_get_integer(GTK_SAT_MODULE(module)->cfgdata,
                                        MOD_CFG_GLOBAL_SECTION,
@@ -747,19 +727,17 @@ static void screen_state_cb(GtkWidget * menuitem, gpointer data)
         /* move window to stored position if requested by configuration */
         if (sat_cfg_get_bool(SAT_CFG_BOOL_MOD_WIN_POS) &&
             g_key_file_has_key(GTK_SAT_MODULE(module)->cfgdata,
-                               MOD_CFG_GLOBAL_SECTION, MOD_CFG_WIN_POS_X, NULL)
-            && g_key_file_has_key(GTK_SAT_MODULE(module)->cfgdata,
-                                  MOD_CFG_GLOBAL_SECTION, MOD_CFG_WIN_POS_Y,
-                                  NULL))
+                               MOD_CFG_GLOBAL_SECTION, MOD_CFG_WIN_POS_X, NULL) &&
+            g_key_file_has_key(GTK_SAT_MODULE(module)->cfgdata,
+                               MOD_CFG_GLOBAL_SECTION, MOD_CFG_WIN_POS_Y,
+                               NULL))
         {
 
             gtk_window_move(GTK_WINDOW(GTK_SAT_MODULE(module)->win),
-                            g_key_file_get_integer(GTK_SAT_MODULE
-                                                   (module)->cfgdata,
+                            g_key_file_get_integer(GTK_SAT_MODULE(module)->cfgdata,
                                                    MOD_CFG_GLOBAL_SECTION,
                                                    MOD_CFG_WIN_POS_X, NULL),
-                            g_key_file_get_integer(GTK_SAT_MODULE
-                                                   (module)->cfgdata,
+                            g_key_file_get_integer(GTK_SAT_MODULE(module)->cfgdata,
                                                    MOD_CFG_GLOBAL_SECTION,
                                                    MOD_CFG_WIN_POS_Y, NULL));
         }
@@ -782,18 +760,18 @@ static void screen_state_cb(GtkWidget * menuitem, gpointer data)
  * New satellite selected.
  *
  * @param data Pointer to the GtkSatModule widget
- * 
- * This menu item is activated when a new satellite is selected in the 
+ *
+ * This menu item is activated when a new satellite is selected in the
  * "Select satellite" submenu of the module pop-up. This will trigger a call
  * to the select_sat() fuinction of the module, which in turn will call the
  * select_sat() function of each child view.
- * 
+ *
  * The catalog number of the selected satellite is attached to the menu item
  */
-static void sat_selected_cb(GtkWidget * menuitem, gpointer data)
+static void sat_selected_cb(GtkWidget *menuitem, gpointer data)
 {
-    gint            catnum;
-    GtkSatModule   *module;
+    gint catnum;
+    GtkSatModule *module;
 
     catnum = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(menuitem), "catnum"));
     module = GTK_SAT_MODULE(data);
@@ -807,10 +785,10 @@ static void sat_selected_cb(GtkWidget * menuitem, gpointer data)
  * in that it will make the predictions with the satellites
  * tracked in the current module.
  */
-static void sky_at_glance_cb(GtkWidget * menuitem, gpointer data)
+static void sky_at_glance_cb(GtkWidget *menuitem, gpointer data)
 {
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
-    gchar          *buff;
+    GtkSatModule *module = GTK_SAT_MODULE(data);
+    gchar *buff;
 
     (void)menuitem;
 
@@ -863,9 +841,9 @@ static void sky_at_glance_cb(GtkWidget * menuitem, gpointer data)
 }
 
 /** Open time manager. */
-static void tmgr_cb(GtkWidget * menuitem, gpointer data)
+static void tmgr_cb(GtkWidget *menuitem, gpointer data)
 {
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
+    GtkSatModule *module = GTK_SAT_MODULE(data);
 
     (void)menuitem;
 
@@ -878,10 +856,10 @@ static void tmgr_cb(GtkWidget * menuitem, gpointer data)
  * @param menuitem The menuitem that was selected.
  * @param data Pointer the GtkSatModule.
  */
-static void rigctrl_cb(GtkWidget * menuitem, gpointer data)
+static void rigctrl_cb(GtkWidget *menuitem, gpointer data)
 {
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
-    gchar          *buff;
+    GtkSatModule *module = GTK_SAT_MODULE(data);
+    gchar *buff;
 
     (void)menuitem;
 
@@ -897,11 +875,11 @@ static void rigctrl_cb(GtkWidget * menuitem, gpointer data)
     if (module->rigctrl == NULL)
     {
         /* gtk_rig_ctrl_new returned NULL becasue no radios are configured */
-        GtkWidget      *dialog;
+        GtkWidget *dialog;
 
         dialog = gtk_message_dialog_new(GTK_WINDOW(app),
                                         GTK_DIALOG_MODAL |
-                                        GTK_DIALOG_DESTROY_WITH_PARENT,
+                                            GTK_DIALOG_DESTROY_WITH_PARENT,
                                         GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
                                         _("You have no radio configuration!\n"
                                           "Please configure a radio first."));
@@ -938,14 +916,14 @@ static void rigctrl_cb(GtkWidget * menuitem, gpointer data)
  *
  * @param window Pointer to the radio control window.
  * @param data Pointer to the GtkSatModule to which this controller is attached.
- * 
+ *
  * This function is called automatically when the window is destroyed.
  */
-static void destroy_rigctrl(GtkWidget * window, gpointer data)
+static void destroy_rigctrl(GtkWidget *window, gpointer data)
 {
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
+    GtkSatModule *module = GTK_SAT_MODULE(data);
 
-    (void)window;               /* avoid unused parameter compiler warning */
+    (void)window; /* avoid unused parameter compiler warning */
 
     module->rigctrlwin = NULL;
     module->rigctrl = NULL;
@@ -957,10 +935,10 @@ static void destroy_rigctrl(GtkWidget * window, gpointer data)
  * @param menuitem The menuitem that was selected.
  * @param data Pointer the GtkSatModule.
  */
-static void rotctrl_cb(GtkWidget * menuitem, gpointer data)
+static void rotctrl_cb(GtkWidget *menuitem, gpointer data)
 {
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
-    gchar          *buff;
+    GtkSatModule *module = GTK_SAT_MODULE(data);
+    gchar *buff;
 
     (void)menuitem;
 
@@ -976,15 +954,14 @@ static void rotctrl_cb(GtkWidget * menuitem, gpointer data)
     if (module->rotctrl == NULL)
     {
         /* gtk_rot_ctrl_new returned NULL becasue no rotators are configured */
-        GtkWidget      *dialog;
+        GtkWidget *dialog;
 
         dialog = gtk_message_dialog_new(GTK_WINDOW(app),
                                         GTK_DIALOG_MODAL |
-                                        GTK_DIALOG_DESTROY_WITH_PARENT,
+                                            GTK_DIALOG_DESTROY_WITH_PARENT,
                                         GTK_MESSAGE_ERROR, GTK_BUTTONS_OK,
-                                        _
-                                        ("You have no rotator configuration!\n"
-                                         "Please configure an antenna rotator first."));
+                                        _("You have no rotator configuration!\n"
+                                          "Please configure an antenna rotator first."));
         g_signal_connect_swapped(dialog, "response",
                                  G_CALLBACK(gtk_widget_destroy), dialog);
         gtk_window_set_title(GTK_WINDOW(dialog), _("ERROR"));
@@ -1018,12 +995,12 @@ static void rotctrl_cb(GtkWidget * menuitem, gpointer data)
  *
  * @param window Pointer to the rotator control window.
  * @param data Pointer to the GtkSatModule to which this controller is attached.
- * 
+ *
  * This function is called automatically when the window is destroyed.
  */
-static void destroy_rotctrl(GtkWidget * window, gpointer data)
+static void destroy_rotctrl(GtkWidget *window, gpointer data)
 {
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
+    GtkSatModule *module = GTK_SAT_MODULE(data);
 
     (void)window;
 
@@ -1031,19 +1008,21 @@ static void destroy_rotctrl(GtkWidget * window, gpointer data)
     module->rotctrl = NULL;
 }
 
-
 /**
  * Open Telecommand & Telemetry Web app.
  *
  * @param menuitem The menuitem that was selected.*********************************************************
  * @param data Pointer the GtkSatModule.
  */
-static void tm_tc_cb(GtkWidget * menuitem, gpointer data)
+static void tm_tc_cb(GtkWidget *menuitem, gpointer data)
 {
     (void)menuitem;
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
+    GtkSatModule *module = GTK_SAT_MODULE(data);
 
-    // include your code here for tm_tc_window_create();
+    system("cd /Users/mahmouderradi/Desktop/Project/Client && python3 client.py &");
+    system("cd /Users/mahmouderradi/Desktop/Project/Server && python3 server.py &");
+    system("cd /Users/mahmouderradi/Desktop/Project/App/backend && python3 manage.py runserver &");
+    system("cd /Users/mahmouderradi/Desktop/Project/App/frontend && npm start &");
 }
 
 /**
@@ -1051,12 +1030,12 @@ static void tm_tc_cb(GtkWidget * menuitem, gpointer data)
  *
  * @param window Pointer to the sky at glance window.
  * @param data Pointer to the GtkSatModule to which this widget is attached.
- * 
+ *
  * This function is called automatically when the window is destroyed.
  */
-static void destroy_skg(GtkWidget * window, gpointer data)
+static void destroy_skg(GtkWidget *window, gpointer data)
 {
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
+    GtkSatModule *module = GTK_SAT_MODULE(data);
 
     (void)window;
 
@@ -1065,7 +1044,7 @@ static void destroy_skg(GtkWidget * window, gpointer data)
 }
 
 /** Ensure that deleted top-level windows are destroyed */
-static gint window_delete(GtkWidget * widget, GdkEvent * event, gpointer data)
+static gint window_delete(GtkWidget *widget, GdkEvent *event, gpointer data)
 {
     (void)widget;
     (void)event;
@@ -1075,7 +1054,7 @@ static gint window_delete(GtkWidget * widget, GdkEvent * event, gpointer data)
 }
 
 /** Autotrack activated */
-static void autotrack_cb(GtkCheckMenuItem * menuitem, gpointer data)
+static void autotrack_cb(GtkCheckMenuItem *menuitem, gpointer data)
 {
     GTK_SAT_MODULE(data)->autotrack = gtk_check_menu_item_get_active(menuitem);
 }
@@ -1087,7 +1066,7 @@ static void autotrack_cb(GtkCheckMenuItem * menuitem, gpointer data)
  * item in the GtkSatModule popup menu. It is simply a wrapper
  * for gtk_sat_module_close_cb, which will close the current module.
  */
-static void close_cb(GtkWidget * menuitem, gpointer data)
+static void close_cb(GtkWidget *menuitem, gpointer data)
 {
     gtk_sat_module_close_cb(menuitem, data);
 }
@@ -1100,11 +1079,11 @@ static void close_cb(GtkWidget * menuitem, gpointer data)
  * with gtk_sat_module_close_cb, which will close the current module,
  * whereafter the module file will be deleted from the disk.
  */
-static void delete_cb(GtkWidget * menuitem, gpointer data)
+static void delete_cb(GtkWidget *menuitem, gpointer data)
 {
-    gchar          *file;
-    GtkWidget      *dialog;
-    gchar          *moddir;
+    gchar *file;
+    GtkWidget *dialog;
+    gchar *moddir;
 
     moddir = get_modules_dir();
     file = g_strconcat(moddir, G_DIR_SEPARATOR_S,
@@ -1114,14 +1093,13 @@ static void delete_cb(GtkWidget * menuitem, gpointer data)
     gtk_sat_module_close_cb(menuitem, data);
 
     /* ask user to confirm removal */
-    dialog = gtk_message_dialog_new_with_markup(NULL,   //GTK_WINDOW (parent),
+    dialog = gtk_message_dialog_new_with_markup(NULL, // GTK_WINDOW (parent),
                                                 GTK_DIALOG_MODAL |
-                                                GTK_DIALOG_DESTROY_WITH_PARENT,
+                                                    GTK_DIALOG_DESTROY_WITH_PARENT,
                                                 GTK_MESSAGE_QUESTION,
                                                 GTK_BUTTONS_YES_NO,
-                                                _
-                                                ("This operation will permanently delete\n<b>%s</b>\n"
-                                                 "from the disk.\nDo you you want to proceed?"),
+                                                _("This operation will permanently delete\n<b>%s</b>\n"
+                                                  "from the disk.\nDo you you want to proceed?"),
                                                 file);
 
     switch (gtk_dialog_run(GTK_DIALOG(dialog)))
@@ -1157,12 +1135,12 @@ static void delete_cb(GtkWidget * menuitem, gpointer data)
  * The primary purpose of this function is to check whether the char length
  * of the name is greater than zero, if yes enable the OK button of the dialog.
  */
-static void name_changed(GtkWidget * widget, gpointer data)
+static void name_changed(GtkWidget *widget, gpointer data)
 {
-    const gchar    *text;
-    gchar          *entry, *end, *j;
-    gint            len, pos;
-    GtkWidget      *dialog = GTK_WIDGET(data);
+    const gchar *text;
+    gchar *entry, *end, *j;
+    gint len, pos;
+    GtkWidget *dialog = GTK_WIDGET(data);
 
     /* step 1: ensure that only valid characters are entered
        (stolen from xlog, tnx pg4i)
@@ -1214,17 +1192,17 @@ static void name_changed(GtkWidget * widget, gpointer data)
  * @note The logic in the code has been borrowed from gaim/pidgin http://pidgin.im/
  *
  */
-gboolean module_window_config_cb(GtkWidget * widget, GdkEventConfigure * event,
+gboolean module_window_config_cb(GtkWidget *widget, GdkEventConfigure *event,
                                  gpointer data)
 {
-    gint            x, y;
-    GtkSatModule   *module = GTK_SAT_MODULE(data);
+    gint x, y;
+    GtkSatModule *module = GTK_SAT_MODULE(data);
 
     /* data is only useful when window is visible */
     if (gtk_widget_get_visible(widget))
         gtk_window_get_position(GTK_WINDOW(widget), &x, &y);
     else
-        return FALSE;           /* carry on normally */
+        return FALSE; /* carry on normally */
 
 #ifdef G_OS_WIN32
     /* Workaround for GTK+ bug # 169811 - "configure_event" is fired
@@ -1239,7 +1217,7 @@ gboolean module_window_config_cb(GtkWidget * widget, GdkEventConfigure * event,
     if (x + event->width < 0 || y + event->height < 0 ||
         x > gdk_screen_width() || y > gdk_screen_height())
     {
-        return FALSE;           /* carry on normally */
+        return FALSE; /* carry on normally */
     }
 
     /* store the position and size */
@@ -1256,7 +1234,7 @@ gboolean module_window_config_cb(GtkWidget * widget, GdkEventConfigure * event,
     return FALSE;
 }
 
-static gint sat_nickname_compare(const sat_t * a, const sat_t * b)
+static gint sat_nickname_compare(const sat_t *a, const sat_t *b)
 {
     return gpredict_strcmp(a->nickname, b->nickname);
 }
