@@ -294,6 +294,7 @@ function COM() {
 
           <Grid item xs={12} md={4}>
             {/* Filter checkboxes */}
+            {/*
             <Box
               sx={{ display: "flex", flexDirection: "row", flexWrap: "wrap" }}
             >
@@ -310,7 +311,7 @@ function COM() {
                 />
               ))}
             </Box>
-
+                */}
             {/* Action Log Window */}
             <Card>
               <MDBox p={2} sx={{ height: "700px", overflow: "auto" }}>
