@@ -18,7 +18,7 @@ def com_view(request):
 
     try:
         client = pymongo.MongoClient(
-            "mongodb+srv://merradi:sonxoq-xubfi5-tyxPas@cluster0.uwxph0t.mongodb.net/?retryWrites=true&w=majority",
+            "",
             tlsCAFile=certifi.where(),
         )
         db = client.myDatabase
