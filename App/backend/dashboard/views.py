@@ -7,7 +7,7 @@ import certifi
 
 # Replace with your MongoDB connection details
 client = MongoClient(
-    "mongodb+srv://merradi:sonxoq-xubfi5-tyxPas@cluster0.uwxph0t.mongodb.net/?retryWrites=true&w=majority",
+    "",
     tlsCAFile=certifi.where(),
 )
 db = client.myDatabase
