@@ -31,7 +31,7 @@ def random_data_volume():
 
 # Helper function to get a Mars rover image
 def get_mars_rover_image():
-    rover_url = "https://api.nasa.gov/mars-photos/api/v1/rovers/curiosity/photos?sol=1000&api_key=WgIuHBbHhTRhGykrKjM8LZ8Y9Hte5UWNiN2apNIk"
+    rover_url = ""
     response = requests.get(rover_url)
     if response.status_code == 200:
         data = response.json()
